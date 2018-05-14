@@ -72,6 +72,7 @@ module BlockStack
   end
 
   add_template(:search_api, :crud_plus, :get_api, '/search', type: :route) do
-    # TODO
+    halt 400, { message: 'Please provide a valid query' } if (params[:query] || params[:q]).strip.to_s.empty?
+    model.search((params[:query] || params[:q]).to_s)
   end
 end
