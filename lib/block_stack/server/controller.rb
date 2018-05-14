@@ -70,6 +70,14 @@ module BlockStack
       return nil unless model
       model.find(params[:id])
     end
+
+    # Same as find_model but automatically halts and returns a 404 if a match
+    # is not found.
+    def find_model!
+      model = find_model
+      return model if model
+      halt 404, 'Not found'
+    end
   end
 
   # Sets the default controller_base option under Server to be Controller.
