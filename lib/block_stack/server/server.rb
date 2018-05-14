@@ -298,10 +298,12 @@ module BlockStack
           full = "#{verb} #{current}"
           if api_routes.include?(full)
             verb, path = api_routes.delete(full).split(' ', 2)
+            path = path.sub("/#{api_prefix}", '') if api_prefix
             path = path.sub(/^\/#{Regexp.escape(old)}/i, '') if old
             replace = "#{api_prefix ? "/#{api_prefix}" : nil}/#{new}"
             logger.debug("Changing API route from '#{current}' to #{replace}#{path}")
             add_api_routes("#{verb} #{replace}#{path}")
+            current = path
           else
             replace = "/#{new}"
           end
