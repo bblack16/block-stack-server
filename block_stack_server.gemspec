@@ -32,6 +32,8 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency 'sinatra', '~> 2.0'
   spec.add_runtime_dependency 'block_stack_util', '~> 1.0'
+  spec.add_runtime_dependency 'block_stack_model', '~> 1.0'
+  spec.add_runtime_dependency 'block_stack_query', '~> 1.0'
   spec.add_runtime_dependency 'gyoku'
 
   spec.add_development_dependency "bundler", "~> 1.16"
