@@ -1,5 +1,5 @@
 module BlockStack
-  class Server < Sinatra::Base
+  class Server
     VERSION = '1.0.0'.freeze
   end
 end
