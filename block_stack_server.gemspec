@@ -1,7 +1,7 @@
 
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "block_stack_server/version"
+require "block_stack/server/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "block_stack_server"
@@ -34,7 +34,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'block_stack_util', '~> 1.0'
   spec.add_runtime_dependency 'block_stack_model', '~> 1.0'
   spec.add_runtime_dependency 'block_stack_query', '~> 1.0'
-  spec.add_runtime_dependency 'gyoku'
+  spec.add_runtime_dependency 'gyoku', '~> 1.3'
 
   spec.add_development_dependency "bundler", "~> 1.16"
   spec.add_development_dependency "rake", "~> 10.0"
