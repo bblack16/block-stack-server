@@ -35,6 +35,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'block_stack_model', '~> 1.0'
   spec.add_runtime_dependency 'block_stack_query', '~> 1.0'
   spec.add_runtime_dependency 'gyoku', '~> 1.3'
+  spec.add_runtime_dependency 'task_vault', '~> 1.0'
 
   spec.add_development_dependency "bundler", "~> 1.16"
   spec.add_development_dependency "rake", "~> 10.0"
