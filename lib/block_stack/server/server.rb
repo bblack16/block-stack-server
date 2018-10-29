@@ -121,7 +121,7 @@ module BlockStack
       path.unshift(opts[:prefix]) if opts[:prefix]
       path.unshift("v#{opts[:version]}") if opts[:version]
       path.unshift(api_prefix) if opts[:api] and api_prefix
-      path = "/#{path.compact.join('/')}".pathify.gsub(/\/+/, '/')
+      path = "/#{path.compact.join('/')}/?".pathify.gsub(/\/+/, '/')
       (path.end_with?('/') ? "#{path}?" : path) + (verb == :get && opts[:api] ? '(.:format)?' : '')
     end
 
@@ -168,7 +168,7 @@ module BlockStack
 
     # Provides a list of controllers that this server should use
     def self.controllers
-      ((@controllers ||= []) + load_controller_base).compact.uniq
+      load_controller_base
     end
 
     # Add a controller to this server
