@@ -9,7 +9,7 @@ require 'sinatra'
 require 'task_vault' unless defined?(TaskVault::VERSION)
 
 # require_relative 'server/version'
-require_relative 'cli/opts_parser'
+require_relative 'server/cli/opts_parser'
 require_relative 'server/async'
 require_relative 'server/server'
 require_relative 'server/controller'
