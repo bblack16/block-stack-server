@@ -13,6 +13,7 @@ module BlockStack
     attr_ary_of Formatter, :formatters, default_proc: :default_formatters, singleton: true
     attr_sym :default_format, default: :json, allow_nil: true, singleton: true
     attr_of BBLib::HashStruct, :configuration, default_proc: :inherited_config, singleton: true
+    attr_of BBLib::OptsParser, :opts_parser, default_proc: proc { BlockStack::DEFAULT_OPTS_PARSER }, singleton: true
 
     bridge_method :route_map, :route_names, :api_routes, :formatters, :default_formatters, :default_format
     bridge_method :logger, :debug, :info, :warn, :error, :fatal, :timer, :app_name, :config
@@ -42,7 +43,8 @@ module BlockStack
     config(
       controller_base: nil,  # Set this to a class that inherits from BlockStack::Controller
       log_requests: true,
-      auto_serialize: true # If true all objects that respond to serialize will be serialized before being passed to the formatter (api routes only)
+      auto_serialize: true, # If true all objects that respond to serialize will be serialized before being passed to the formatter (api routes only)
+      parse_argv: false # If set to true, whenever run! is called cmdline args will be parsed and applied based on the :opts_parser
     )
 
     class << self
@@ -252,9 +254,17 @@ module BlockStack
 
     # Override default Sinatra run. Registers controllers before running.
     def self.run!(*args)
+      parse_argv if config.parse_argv?
       logger.info("Starting up your BlockStack server")
       register_controllers
       super
+    end
+
+    # Parses arguments from argv using this classes opts_parser.
+    def self.parse_argv
+      @parsed_args = opts_parser.parse
+      @parsed_args.only(:bind, :port) { |k, v| set(k => v) }
+      config(@parsed_args.except(:help, :log_level))
     end
 
     protected
