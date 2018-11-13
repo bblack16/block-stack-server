@@ -44,7 +44,10 @@ module BlockStack
       controller_base: nil,  # Set this to a class that inherits from BlockStack::Controller
       log_requests: true,
       auto_serialize: true, # If true all objects that respond to serialize will be serialized before being passed to the formatter (api routes only)
-      parse_argv: false # If set to true, whenever run! is called cmdline args will be parsed and applied based on the :opts_parser
+      parse_argv: false, # If set to true, whenever run! is called cmdline args will be parsed and applied based on the :opts_parser
+      config_folder: nil, # Should be set to a directory contain json or yaml configuration files. nil turns off on disk config loading.
+      sync_configs: false, # When true config files will be auto refreshed from disk.
+      config_extensions: %w{yml yaml json} # The file extensions that will be used when loading configs from the config directory.
     )
 
     class << self
@@ -263,8 +266,26 @@ module BlockStack
     # Parses arguments from argv using this classes opts_parser.
     def self.parse_argv
       @parsed_args = opts_parser.parse
-      @parsed_args.only(:bind, :port) { |k, v| set(k => v) }
+      @parsed_args.only(:bind, :port, :environment).each { |k, v| set(k => v) }
       config(@parsed_args.except(:help, :log_level))
+    end
+
+    def self.load_configs
+      return false unless config.config_folder
+      logger.info("Loading config files from #{config.config_folder} with extensions #{config.config_extensions.join_terms(:or)}")
+      if Dir.exist?(config.config_folder.to_s)
+        extensions = config.config_extensions.map { |ext| "*.#{ext}" }
+        BBLib.scan_files(config.config_folder.to_s, *extensions) do |file|
+          begin
+            config(file.file_name(false).to_sym => Harmoni.build(file, sync: config.sync_configs))
+            logger.info("Loaded config file #{file.file_name(false)}.")
+          rescue => e
+            logger.error("Failed to load config file #{file}: #{e}\n\t#{e.backtrace.join("\n\t")}")
+          end
+        end
+      else
+        logger.warn("Config folder does not exist at #{config.config_folder}. No configs will be loaded.")
+      end
     end
 
     protected
