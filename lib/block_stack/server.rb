@@ -7,6 +7,7 @@ require 'json'
 require 'yaml'
 require 'sinatra'
 require 'task_vault' unless defined?(TaskVault::VERSION)
+require 'harmoni' unless defined?(Harmoni::VERSION)
 
 # require_relative 'server/version'
 require_relative 'server/cli/opts_parser'
