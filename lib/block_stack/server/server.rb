@@ -257,19 +257,23 @@ module BlockStack
 
     # Override default Sinatra run. Registers controllers before running.
     def self.run!(*args)
+      load_configs
       parse_argv if config.parse_argv?
       logger.info("Starting up your BlockStack server")
+      set(:environment, :development) unless environment
+      logger.info("Running in #{environment} mode")
       register_controllers
       super
     end
 
     # Parses arguments from argv using this classes opts_parser.
     def self.parse_argv
-      @parsed_args = opts_parser.parse
-      @parsed_args.only(:bind, :port, :environment).each { |k, v| set(k => v) }
+      @parsed_args = opts_parser.parse.reject { |k, v| v.nil? }
+      @parsed_args.only(:bind, :port, :environment).each { |k, v| set(k, v) }
       config(@parsed_args.except(:help, :log_level))
     end
 
+    # Loads all configuration files out of the config directory
     def self.load_configs
       return false unless config.config_folder
       logger.info("Loading config files from #{config.config_folder} with extensions #{config.config_extensions.join_terms(:or)}")
@@ -277,8 +281,13 @@ module BlockStack
         extensions = config.config_extensions.map { |ext| "*.#{ext}" }
         BBLib.scan_files(config.config_folder.to_s, *extensions) do |file|
           begin
-            config(file.file_name(false).to_sym => Harmoni.build(file, sync: config.sync_configs))
-            logger.info("Loaded config file #{file.file_name(false)}.")
+            name = file.file_name(false).to_sym
+            if respond_to?("load_#{name}_config")
+              send("load_#{name}_config", Harmoni.build(file).configuration.keys_to_sym)
+            else
+              config(name => Harmoni.build(file, sync: config.sync_configs))
+              logger.info("Loaded config file #{file.file_name(false)}.")
+            end
           rescue => e
             logger.error("Failed to load config file #{file}: #{e}\n\t#{e.backtrace.join("\n\t")}")
           end
@@ -286,6 +295,32 @@ module BlockStack
       else
         logger.warn("Config folder does not exist at #{config.config_folder}. No configs will be loaded.")
       end
+    end
+
+    # Loader for the application.yml file for file based settings and configs
+    def self.load_application_config(config)
+      logger.info("Loading application settings from config...")
+      configs = [config[environment], config[:default]].flatten(1).compact
+      configs.each do |conf|
+        (conf[:settings] || {}).each { |k, v| set(k, v) }
+        (conf[:config] || {}).each { |k, v| config(k => v) }
+      end
+    end
+
+    # Loader to build databases from a yml config file
+    def self.load_database_config(config)
+      logger.info("Loading database(s) from config...")
+      databases = [config[environment], config[:default]].flatten(1).compact
+      databases.each do |db|
+        BlockStack::Database.setup(db[:name], db[:adapter], *[db[:configuration]].flatten(1))
+      end
+    end
+
+    # Loader to generate authentication and authorization from a yml config file.
+    # Move to BlockStack auth gem
+    def self.load_auth_config(config)
+      logger.info("Loading auth settings from config...")
+      # TODO
     end
 
     protected
