@@ -257,7 +257,6 @@ module BlockStack
 
     # Override default Sinatra run. Registers controllers before running.
     def self.run!(*args)
-      load_configs
       parse_argv if config.parse_argv?
       logger.info("Starting up your BlockStack server")
       set(:environment, :development) unless environment
