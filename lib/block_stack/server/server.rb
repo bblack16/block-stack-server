@@ -33,22 +33,11 @@ module BlockStack
 
     # Loads the configuration of an ancestors this class inherits from.
     def self.inherited_config
-      ancestors.reverse.each_with_object(BBLib::HashStruct.new) do |anc, hash|
+      ancestors.reverse.each_with_object(Configuration.new) do |anc, hash|
         next if anc == self || !anc.respond_to?(:config)
         hash.merge!(anc.config)
       end
     end
-
-    # Setup default settings
-    config(
-      controller_base: nil,  # Set this to a class that inherits from BlockStack::Controller
-      log_requests: true,
-      auto_serialize: true, # If true all objects that respond to serialize will be serialized before being passed to the formatter (api routes only)
-      parse_argv: false, # If set to true, whenever run! is called cmdline args will be parsed and applied based on the :opts_parser
-      config_folder: nil, # Should be set to a directory contain json or yaml configuration files. nil turns off on disk config loading.
-      sync_configs: false, # When true config files will be auto refreshed from disk.
-      config_extensions: %w{yml yaml json} # The file extensions that will be used when loading configs from the config directory.
-    )
 
     class << self
       # Overwrite the origin http verb methods from Sinatra to extend functionality
@@ -211,6 +200,7 @@ module BlockStack
 
     before do
       env['rack.logger'] = logger
+      reload_everything if config.hot_load?
       if config.log_requests
         timer.start(request.object_id)
       end
@@ -275,24 +265,25 @@ module BlockStack
     # Loads all configuration files out of the config directory
     def self.load_configs
       return false unless config.config_folder
-      logger.info("Loading config files from #{config.config_folder} with extensions #{config.config_extensions.join_terms(:or)}")
-      if Dir.exist?(config.config_folder.to_s)
-        extensions = config.config_extensions.map { |ext| "*.#{ext}" }
-        BBLib.scan_files(config.config_folder.to_s, *extensions) do |file|
-          begin
-            name = file.file_name(false).to_sym
-            if respond_to?("load_#{name}_config")
-              send("load_#{name}_config", Harmoni.build(file).configuration.keys_to_sym)
-            else
-              config(name => Harmoni.build(file, sync: config.sync_configs))
-              logger.info("Loaded config file #{file.file_name(false)}.")
+      logger.info("Loading config files from #{config.config_folder} with extensions #{config.config_patterns.join_terms(:or)}")
+      config.config_folders.each do |config_folder|
+        if Dir.exist?(config.config_folder.to_s)
+          BBLib.scan_files(config.config_folder.to_s, *config.config_patterns) do |file|
+            begin
+              name = file.file_name(false).to_sym
+              if respond_to?("load_#{name}_config")
+                send("load_#{name}_config", Harmoni.build(file).configuration.keys_to_sym)
+              else
+                config(name => Harmoni.build(file, sync: config.sync_configs))
+                logger.info("Loaded config file #{file.file_name(false)}.")
+              end
+            rescue => e
+              logger.error("Failed to load config file #{file}: #{e}\n\t#{e.backtrace.join("\n\t")}")
             end
-          rescue => e
-            logger.error("Failed to load config file #{file}: #{e}\n\t#{e.backtrace.join("\n\t")}")
           end
+        else
+          logger.warn("Config folder does not exist at #{config.config_folder}. No configs will be loaded.")
         end
-      else
-        logger.warn("Config folder does not exist at #{config.config_folder}. No configs will be loaded.")
       end
     end
 
@@ -376,6 +367,11 @@ module BlockStack
           route[0] = Mustermann.new("#{replace}#{current}", route[0].options)
         end
       end
+    end
+
+    def reload_everything
+      load_controller_base
+      load_configs
     end
   end
 end
