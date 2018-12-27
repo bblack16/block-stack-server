@@ -79,7 +79,4 @@ module BlockStack
       halt 404, 'Not found'
     end
   end
-
-  # Sets the default controller_base option under Server to be Controller.
-  Server.config(controller_base: BlockStack::Controller)
 end
