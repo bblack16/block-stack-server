@@ -10,8 +10,6 @@ module BlockStack
       attr_of Class, :controller_base, default: BlockStack::Controller, allow_nil: true
       # When set to true the run! method will analyze the arguments in the ARGV constant
       attr_bool :parse_argv, default: true
-      # Load all models, controllers and app files on each request. Useful for testing only.
-      attr_bool :hot_load, default: false
 
 
       # Config File Configuration
@@ -20,7 +18,7 @@ module BlockStack
       # into this config structure using the Harmony gem.
       attr_ary_of String, :config_folders, default: []
       # When set to true, configs will be read in with sync set to true in Harmony (auto refreshed from and to disk on change)
-      attr_bool :sync_configs
+      attr_bool :sync_configs, default: false
       # The file extensions that will be automatically read in as config files.
       attr_ary_of [String, Regexp], :config_patterns, default: %w{application.yml database.yml authentication.yml}
 
@@ -38,9 +36,29 @@ module BlockStack
       # TODO Implement the below
       # The setters below are not yet used in the BlockStack::Server
       # ------------------------------------------------------------
+      # Load all models, controllers and app files on each request. Useful for testing only.
+      # attr_bool :hot_load, default: false
 
 
       init_type :loose
+
+      def set(args)
+        args.each do |key, value|
+          if respond_to?("#{key}=")
+            send("#{key}=", value)
+          else
+            hpath_set(key => value)
+          end
+        end
+      end
+
+      alias _serialize serialize
+
+      def serialize(hide_defaults = false)
+        _serialize(hide_defaults).merge(self)
+      end
+
+      alias_method :to_h, :serialize
 
       protected
 

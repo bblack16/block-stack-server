@@ -1,5 +1,6 @@
 module BlockStack
 
+  # TODO: Nest the results and add pagination info
   add_template(:index_api, :crud, :get_api, '/', type: :route) do
     limit = params[:limit]&.to_i || 25
     offset = ((params[:page]&.to_i || 1) - 1) * limit
