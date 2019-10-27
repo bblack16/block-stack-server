@@ -10,7 +10,9 @@ module BlockStack
       attr_of Class, :controller_base, default: BlockStack::Controller, allow_nil: true
       # When set to true the run! method will analyze the arguments in the ARGV constant
       attr_bool :parse_argv, default: true
-
+      # The base URL for this server. This is primarily for DNS or load balanced names. This
+      # is used for absolute URLs that refer back to the server externally.
+      attr_str :app_address, default: "http://localhost:4567"
 
       # Config File Configuration
       # -------------------------

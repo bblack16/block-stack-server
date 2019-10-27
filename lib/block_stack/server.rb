@@ -11,7 +11,7 @@ require 'harmoni' unless defined?(Harmoni::VERSION)
 
 # require_relative 'server/version'
 require_relative 'server/cli/opts_parser'
-require_relative 'server/async'
 require_relative 'server/server'
 require_relative 'server/controller'
 require_relative 'server/configuration'
+require_relative 'server/async'
